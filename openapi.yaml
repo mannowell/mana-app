@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: Mannobot API
+  description: AI WhatsApp Assistant for Small Businesses
+  version: 0.1.0
+  contact:
+    name: Mannotech
+
+servers:
+  - url: https://mana.mannotech.duckdns.org/api
+    description: Production API via Traefik
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserCreate:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        business_name:
+          type: string
+
+    UserOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        business_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+
+    AppointmentCreate:
+      type: object
+      required: [title, appointment_time]
+      properties:
+        title:
+          type: string
+        customer_name:
+          type: string
+        customer_phone:
+          type: string
+        appointment_time:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+          default: 60
+        notes:
+          type: string
+
+    AppointmentOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        customer_name:
+          type: string
+        customer_phone:
+          type: string
+        appointment_time:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+        status:
+          type: string
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    WahaWebhook:
+      type: object
+      required: [event]
+      properties:
+        event:
+          type: string
+        payload:
+          type: object
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [auth]
+      summary: Register business
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        200:
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: Login and receive JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        200:
+          description: JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+
+  /api/v1/appointments:
+    get:
+      tags: [appointments]
+      summary: List of logged-in user's appointments (requires JWT)
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Appointment list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentOut'
+    post:
+      tags: [appointments]
+      summary: Create appointment for logged-in user (requires JWT)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentCreate'
+      responses:
+        200:
+          description: Created appointment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentOut'
+
+  /api/v1/webhooks/waha:
+    post:
+      tags: [webhooks]
+      summary: Receive WhatsApp events from WAHA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WahaWebhook'
+      responses:
+        200:
+          description: Webhook received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean

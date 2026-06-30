@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://mannobot:mannobot@db:5432/mannobot
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - WAHA_URL=${WAHA_URL:-http://waha:3000}
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - WAHA_SESSION_NAME=${WAHA_SESSION_NAME:-mannobot}
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    volumes:
+      - ./backend:/app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mannobot-api.rule=Host(`mana.mannotech.duckdns.org`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.mannobot-api.tls.certresolver=letsencrypt"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      backend:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mannobot.rule=Host(`mana.mannotech.duckdns.org`)"
+      - "traefik.http.routers.mannobot.tls.certresolver=letsencrypt"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=mannobot
+      - POSTGRES_PASSWORD=mannobot
+      - POSTGRES_DB=mannobot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mannobot"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
