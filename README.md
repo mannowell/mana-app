@@ -1,62 +1,86 @@
-# Mannobot — AI WhatsApp Assistant for Small Businesses
+# MANA App — AI WhatsApp Assistant MVP
 
-Mannotech MVP: FastAPI backend + React frontend + WAHA + OpenRouter (free models).
+Stack: FastAPI (backend) + React/Vite/Tailwind (frontend) + PostgreSQL + WAHA/Evolution + OpenRouter (free models). Deploy: Docker Compose local. Produção: Traefik + Let's Encrypt em `mana.mannotech.duckdns.org`. CI: GitHub Actions. Deploy: Dokploy.
 
-## API Contract
+## Repositório
 
-- OpenAPI schema: `openapi.yaml` (source of truth)
-- Backend exposes it at `GET /openapi.json`
-- Frontend types mirror the schema in `frontend/src/types/api.ts`
+`https://github.com/mannowell/mana-app` (owner: mannowell)
 
-- Frontend API client: `frontend/src/api/client.ts`
-
-## Project Structure
+## Estrutura
 
 ```
 mana-app/
-├── backend/
-│   ├── app/
-│   │   ├── main.py
-│   │   ├── config.py
-│   │   ├── database.py
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── schemas/
-│   │   └── services/
-│   │       ├── ai.py
-│   │       └── waha.py
+├── backend/          # FastAPI
+│   ├── app/          # Rotas, schemas, services, models
 │   ├── requirements.txt
 │   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── api/client.ts
-│   │   ├── types/api.ts
-│   │   ├── pages/
-│   │   └── components/
-│   └── ...
-├── openapi.yaml
+├── frontend/         # React + Vite + Tailwind
+│   ├── src/          # Páginas, components, API client
+│   ├── package.json
+│   └── Dockerfile
+├── ops/
+├── .github/workflows/ci.yml
 ├── docker-compose.yml
-└── README.md
+└── openapi.yaml
 ```
 
-## Environment (backend)
+## Rodar localmente
 
+Clone e suba os serviços:
+
+```bash
+git clone https://github.com/mannowell/mana-app.git
+cd mana-app
+cp .env.example .env   # ajustar chaves
+docker compose up --build
 ```
-OPENROUTER_API_KEY=
-WAHA_URL=http://waha:3000
-WAHA_API_KEY=
-WAHA_SESSION_NAME=mannobot
-SECRET_KEY=change-me-in-production
-```
-## Deployment
 
-- Domain: mana.mannotech.duckdns.org (Traefik + Let’s Encrypt)
-- Backend router: `Host(mana.mannotech.duckdns.org) && PathPrefix(/api)`
-- compose healthchecks: db (pg_isready), backend (/health), frontend (HTTP 200 on /)
+Serviços:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8000
+- API docs: http://localhost:8000/docs
 
-## Team
+## Variáveis de ambiente (backend)
+
+- `DATABASE_URL`: Postgres, ex: `postgresql://mannobot:senha@db:5432/mannobot`
+- `OPENROUTER_API_KEY`: chave OpenRouter (mantida em segredo)
+- `WAHA_URL`: `http://waha:3000`
+- `WAHA_API_KEY`: chave Evolution/WAHA
+- `WAHA_SESSION_NAME`: `mannobot`
+- `SECRET_KEY`: chave JWT/sessão
+
+## Deploy produção (Traefik)
+
+O `docker-compose.yml` já inclui labels do Traefik para roteamento e TLS:
+
+- `mana.mannotech.duckdns.org` → frontend
+- `mana.mannotech.duckdns.org/api` → backend
+
+Certificado via Let's Encrypt usando certresolver `letsencrypt` (configurado no Traefik do host).
+
+Para atualizar produção sem downtime, replique o compose no host/Dokploy.
+
+## CI (GitHub Actions)
+
+Workflow `.github/workflows/ci.yml`:
+
+1. Lint + build/test em PR/push para `main`
+2. Build e push das imagens para `ghcr.io` no push de `main`
+   - Tags: `:${{ github.sha }}` e `:latest`
+
+Para usar as imagens em produção, substitua a seção `build:` no `docker-compose.yml` por `image:` apontando para o `ghcr.io`.
+
+## Checklist de produção
+
+- [ ] DNS `mana.mannotech.duckdns.org` apontando para o host Traefik
+- [ ] Traefik com network externa acessível aos containers do compose
+- [ ] Entrypoints/certresolver `letsencrypt` configurados no Traefik
+- [ ] Secrets configurados no painel do Dokploy/GitHub
+- [ ] Volume `pgdata` persistido no host
+
+## Time
 
 - **Sam** — DevOps
-- **Leo** — Backend + AI integration  
-- **Mia** — Frontend + UX  
-- **Alex** — API contracts + integration
+- **Leo** — Backend + AI
+- **Mia** — Frontend
+- **Alex** — QA
