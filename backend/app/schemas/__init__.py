@@ -2,8 +2,8 @@
 Pydantic Schemas — request/validation models
 """
 
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from pydantic import BaseModel
+from typing import Optional
 from datetime import datetime
 
 

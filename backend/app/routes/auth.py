@@ -3,7 +3,8 @@ Auth routes — register, login, JWT, dependency
 """
 import jwt
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
+from passlib.context import CryptContext, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from jose import JWTError
@@ -14,6 +15,7 @@ from app import models, schemas
 
 security = HTTPBearer()
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 router = APIRouter()
 
 # Re-export for use in other route modules
