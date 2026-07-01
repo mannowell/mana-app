@@ -4,7 +4,8 @@ Auth routes — register, login, JWT, dependency
 import jwt
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends
-from passlib.context import CryptContext, HTTPException, status
+from passlib.context import CryptContext
+from fastapi import HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from jose import JWTError
