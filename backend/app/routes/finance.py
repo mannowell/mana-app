@@ -5,7 +5,6 @@ Finance routes — AI categorization and cash flow insights
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List
 
 from app.database import get_db
 from app import models, schemas

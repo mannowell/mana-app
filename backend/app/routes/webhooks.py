@@ -2,7 +2,7 @@
 Webhook routes — receive WhatsApp messages from WAHA
 """
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 
 from app import schemas
 from app.services import ai, waha

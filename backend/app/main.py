@@ -2,17 +2,13 @@
 Mannobot FastAPI Backend
 """
 
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from typing import List, Optional
-from datetime import datetime
 import os
-import json
 import yaml
 
-from app.database import get_db, engine, Base
-from app import models, schemas, routes
+from app.database import engine, Base
+from app import routes
 from app.config import settings
 
 # Create tables
